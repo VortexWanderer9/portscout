@@ -1,0 +1,76 @@
+// Package ports parses port specifications such as "22,80,8000-8100".
+package ports
+
+import (
+	"errors"
+	"fmt"
+	"sort"
+	"strconv"
+	"strings"
+)
+
+const (
+	minPort = 1
+	maxPort = 65535
+)
+
+// Parse turns a comma-separated list of ports and ranges into a sorted,
+// de-duplicated slice of port numbers.
+func Parse(spec string) ([]int, error) {
+	spec = strings.TrimSpace(spec)
+	if spec == "" {
+		return nil, errors.New("empty port specification")
+	}
+
+	seen := make(map[int]struct{})
+	for _, part := range strings.Split(spec, ",") {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			return nil, errors.New("empty entry in port specification")
+		}
+
+		lo, hi, err := parseEntry(part)
+		if err != nil {
+			return nil, err
+		}
+		for p := lo; p <= hi; p++ {
+			seen[p] = struct{}{}
+		}
+	}
+
+	out := make([]int, 0, len(seen))
+	for p := range seen {
+		out = append(out, p)
+	}
+	sort.Ints(out)
+	return out, nil
+}
+
+func parseEntry(s string) (lo, hi int, err error) {
+	if a, b, isRange := strings.Cut(s, "-"); isRange {
+		if lo, err = parsePort(a); err != nil {
+			return 0, 0, err
+		}
+		if hi, err = parsePort(b); err != nil {
+			return 0, 0, err
+		}
+		if lo > hi {
+			return 0, 0, fmt.Errorf("invalid range %q: start is greater than end", s)
+		}
+		return lo, hi, nil
+	}
+
+	lo, err = parsePort(s)
+	return lo, lo, err
+}
+
+func parsePort(s string) (int, error) {
+	n, err := strconv.Atoi(strings.TrimSpace(s))
+	if err != nil {
+		return 0, fmt.Errorf("invalid port %q", s)
+	}
+	if n < minPort || n > maxPort {
+		return 0, fmt.Errorf("port %d out of range (%d-%d)", n, minPort, maxPort)
+	}
+	return n, nil
+}
