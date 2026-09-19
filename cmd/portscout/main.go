@@ -50,6 +50,10 @@ func run() int {
 		fmt.Fprintln(os.Stderr, "error: -w must be at least 1")
 		return 2
 	}
+	if *timeout <= 0 {
+		fmt.Fprintln(os.Stderr, "error: -t must be greater than 0")
+		return 2
+	}
 
 	portList, err := ports.Parse(*portSpec)
 	if err != nil {
