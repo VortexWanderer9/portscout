@@ -5,6 +5,7 @@ LDFLAGS := -s -w -X main.version=$(VERSION)
 .PHONY: build test vet fmt run clean
 
 build:
+	mkdir -p bin
 	go build -ldflags "$(LDFLAGS)" -o bin/$(BINARY) ./cmd/$(BINARY)
 
 test:
