@@ -45,6 +45,9 @@ portscout [flags] <host>
   -version      print version and exit
 ```
 
+The timeout passed to `-t` must be greater than zero. Use Go duration syntax,
+such as `500ms` or `2s`.
+
 ### Examples
 
 ```sh
