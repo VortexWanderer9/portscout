@@ -1,8 +1,14 @@
+# Local build output
 bin/
 dist/
 *.exe
 *.test
+
+# Coverage profiles
+coverage.out
 *.out
+
+# Editor and platform metadata
 .DS_Store
 .idea/
 .vscode/
