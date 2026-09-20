@@ -119,8 +119,16 @@ func TestSanitize(t *testing.T) {
 }
 
 func TestServiceName(t *testing.T) {
-	if ServiceName(22) != "ssh" {
-		t.Error("expected ssh for port 22")
+	for port, want := range map[int]string{
+		22:    "ssh",
+		389:   "ldap",
+		2375:  "docker",
+		6443:  "kubernetes",
+		11211: "memcached",
+	} {
+		if got := ServiceName(port); got != want {
+			t.Errorf("ServiceName(%d) = %q, want %q", port, got, want)
+		}
 	}
 	if ServiceName(54321) != "" {
 		t.Error("expected empty name for unknown port")
