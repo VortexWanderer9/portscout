@@ -2,6 +2,7 @@
 package report
 
 import (
+	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -34,6 +35,27 @@ func Ports(w io.Writer, open []scanner.Result) error {
 		}
 	}
 	return nil
+}
+
+// CSV writes open ports with a header row for use in spreadsheets and scripts.
+func CSV(w io.Writer, open []scanner.Result) error {
+	cw := csv.NewWriter(w)
+	if err := cw.Write([]string{"port", "state", "service", "latency", "banner"}); err != nil {
+		return err
+	}
+	for _, r := range open {
+		if err := cw.Write([]string{
+			fmt.Sprintf("%d", r.Port),
+			"open",
+			r.Service,
+			r.Latency.Round(time.Microsecond).String(),
+			r.Banner,
+		}); err != nil {
+			return err
+		}
+	}
+	cw.Flush()
+	return cw.Error()
 }
 
 // Table writes a human-readable table.

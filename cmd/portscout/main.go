@@ -28,6 +28,7 @@ func run() int {
 		workers     = flag.Int("w", 200, "number of concurrent workers")
 		banners     = flag.Bool("b", false, "grab service banners from open ports")
 		asJSON      = flag.Bool("json", false, "output results as JSON")
+		asCSV       = flag.Bool("csv", false, "output results as CSV")
 		quiet       = flag.Bool("quiet", false, "output only open port numbers")
 		showVersion = flag.Bool("version", false, "print version and exit")
 	)
@@ -55,8 +56,8 @@ func run() int {
 		fmt.Fprintln(os.Stderr, "error: -t must be greater than 0")
 		return 2
 	}
-	if *asJSON && *quiet {
-		fmt.Fprintln(os.Stderr, "error: -json and -quiet cannot be used together")
+	if boolCount(*asJSON, *asCSV, *quiet) > 1 {
+		fmt.Fprintln(os.Stderr, "error: only one of -json, -csv, or -quiet may be used")
 		return 2
 	}
 
@@ -90,6 +91,8 @@ func run() int {
 		err = report.Ports(os.Stdout, open)
 	} else if *asJSON {
 		err = report.JSON(os.Stdout, summary)
+	} else if *asCSV {
+		err = report.CSV(os.Stdout, open)
 	} else {
 		err = report.Table(os.Stdout, summary)
 	}
@@ -102,4 +105,14 @@ func run() int {
 		return 130
 	}
 	return 0
+}
+
+func boolCount(values ...bool) int {
+	count := 0
+	for _, value := range values {
+		if value {
+			count++
+		}
+	}
+	return count
 }

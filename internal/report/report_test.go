@@ -69,3 +69,14 @@ func TestPorts(t *testing.T) {
 		t.Errorf("Ports() = %q, want %q", got, want)
 	}
 }
+
+func TestCSV(t *testing.T) {
+	var buf bytes.Buffer
+	results := []scanner.Result{{Port: 443, Service: "https", Latency: time.Millisecond, Banner: "server, v1"}}
+	if err := CSV(&buf, results); err != nil {
+		t.Fatal(err)
+	}
+	if got, want := buf.String(), "port,state,service,latency,banner\n443,open,https,1ms,\"server, v1\"\n"; got != want {
+		t.Errorf("CSV() = %q, want %q", got, want)
+	}
+}

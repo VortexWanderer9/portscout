@@ -42,6 +42,7 @@ portscout [flags] <host>
   -w int        number of concurrent workers (default 200)
   -b            grab service banners from open ports
   -json         output results as JSON
+  -csv          output results as CSV
   -quiet        output only open port numbers
   -version      print version and exit
 ```
@@ -63,6 +64,9 @@ portscout -p web example.com
 
 # Print open port numbers only, one per line
 portscout -quiet -p 1-1024 127.0.0.1
+
+# Send a CSV report to a file
+portscout -csv -p web example.com > report.csv
 
 # Scan every port, faster, JSON output piped to jq
 portscout -p all -w 500 -json 192.168.1.10 | jq '.open[].port'
