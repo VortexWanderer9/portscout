@@ -40,3 +40,13 @@ func TestParse(t *testing.T) {
 		})
 	}
 }
+
+func TestParseAll(t *testing.T) {
+	got, err := Parse("ALL")
+	if err != nil {
+		t.Fatalf("Parse(all): %v", err)
+	}
+	if len(got) != 65535 || got[0] != 1 || got[len(got)-1] != 65535 {
+		t.Fatalf("Parse(all) returned unexpected range: len=%d first=%d last=%d", len(got), got[0], got[len(got)-1])
+	}
+}

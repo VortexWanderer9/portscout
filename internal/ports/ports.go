@@ -21,6 +21,13 @@ func Parse(spec string) ([]int, error) {
 	if spec == "" {
 		return nil, errors.New("empty port specification")
 	}
+	if strings.EqualFold(spec, "all") {
+		out := make([]int, maxPort)
+		for i := range out {
+			out[i] = i + minPort
+		}
+		return out, nil
+	}
 
 	seen := make(map[int]struct{})
 	for _, part := range strings.Split(spec, ",") {
