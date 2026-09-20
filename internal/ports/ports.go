@@ -14,6 +14,8 @@ const (
 	maxPort = 65535
 )
 
+var webPorts = []int{80, 443, 8080, 8443}
+
 // Parse turns a comma-separated list of ports and ranges into a sorted,
 // de-duplicated slice of port numbers.
 func Parse(spec string) ([]int, error) {
@@ -34,6 +36,12 @@ func Parse(spec string) ([]int, error) {
 		part = strings.TrimSpace(part)
 		if part == "" {
 			return nil, errors.New("empty entry in port specification")
+		}
+		if strings.EqualFold(part, "web") {
+			for _, p := range webPorts {
+				seen[p] = struct{}{}
+			}
+			continue
 		}
 
 		lo, hi, err := parseEntry(part)

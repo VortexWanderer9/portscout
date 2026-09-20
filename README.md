@@ -10,7 +10,7 @@ A fast, dependency-free TCP port scanner written in Go. It uses a worker pool fo
 ## Features
 
 - Concurrent scanning with a configurable worker pool
-- Flexible port specs: `22`, `22,80,443`, `1-1024`, `all`, or a mix
+- Flexible port specs: `22`, `22,80,443`, `1-1024`, `all`, `web`, or a mix
 - Optional banner grabbing (SSH, SMTP, FTP, etc.)
 - Well-known service name detection
 - Table or JSON output
@@ -56,6 +56,9 @@ portscout 127.0.0.1
 
 # Scan specific ports with banner grabbing
 portscout -b -p 22,80,443,8080 scanme.nmap.org
+
+# Scan common web-service ports (80, 443, 8080, and 8443)
+portscout -p web example.com
 
 # Scan every port, faster, JSON output piped to jq
 portscout -p all -w 500 -json 192.168.1.10 | jq '.open[].port'
