@@ -42,6 +42,7 @@ portscout [flags] <host>
   -w int        number of concurrent workers (default 200)
   -b            grab service banners from open ports
   -json         output results as JSON
+  -quiet        output only open port numbers
   -version      print version and exit
 ```
 
@@ -59,6 +60,9 @@ portscout -b -p 22,80,443,8080 scanme.nmap.org
 
 # Scan common web-service ports (80, 443, 8080, and 8443)
 portscout -p web example.com
+
+# Print open port numbers only, one per line
+portscout -quiet -p 1-1024 127.0.0.1
 
 # Scan every port, faster, JSON output piped to jq
 portscout -p all -w 500 -json 192.168.1.10 | jq '.open[].port'

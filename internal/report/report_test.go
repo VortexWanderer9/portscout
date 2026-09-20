@@ -59,3 +59,13 @@ func TestJSON(t *testing.T) {
 		t.Errorf("round trip mismatch: %+v", got)
 	}
 }
+
+func TestPorts(t *testing.T) {
+	var buf bytes.Buffer
+	if err := Ports(&buf, []scanner.Result{{Port: 22}, {Port: 443}}); err != nil {
+		t.Fatal(err)
+	}
+	if got, want := buf.String(), "22\n443\n"; got != want {
+		t.Errorf("Ports() = %q, want %q", got, want)
+	}
+}

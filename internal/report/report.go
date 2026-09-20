@@ -26,6 +26,16 @@ func JSON(w io.Writer, s Summary) error {
 	return enc.Encode(s)
 }
 
+// Ports writes one open TCP port number per line for shell pipelines.
+func Ports(w io.Writer, open []scanner.Result) error {
+	for _, r := range open {
+		if _, err := fmt.Fprintln(w, r.Port); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // Table writes a human-readable table.
 func Table(w io.Writer, s Summary) error {
 	fmt.Fprintf(w, "Scan report for %s\n", s.Host)

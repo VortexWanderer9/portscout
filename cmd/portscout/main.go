@@ -28,6 +28,7 @@ func run() int {
 		workers     = flag.Int("w", 200, "number of concurrent workers")
 		banners     = flag.Bool("b", false, "grab service banners from open ports")
 		asJSON      = flag.Bool("json", false, "output results as JSON")
+		quiet       = flag.Bool("quiet", false, "output only open port numbers")
 		showVersion = flag.Bool("version", false, "print version and exit")
 	)
 	flag.Usage = func() {
@@ -52,6 +53,10 @@ func run() int {
 	}
 	if *timeout <= 0 {
 		fmt.Fprintln(os.Stderr, "error: -t must be greater than 0")
+		return 2
+	}
+	if *asJSON && *quiet {
+		fmt.Fprintln(os.Stderr, "error: -json and -quiet cannot be used together")
 		return 2
 	}
 
@@ -81,7 +86,9 @@ func run() int {
 		Open:     open,
 	}
 
-	if *asJSON {
+	if *quiet {
+		err = report.Ports(os.Stdout, open)
+	} else if *asJSON {
 		err = report.JSON(os.Stdout, summary)
 	} else {
 		err = report.Table(os.Stdout, summary)
