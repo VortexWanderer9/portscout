@@ -23,19 +23,17 @@ func Parse(spec string) ([]int, error) {
 	if spec == "" {
 		return nil, errors.New("empty port specification")
 	}
-	if strings.EqualFold(spec, "all") {
-		out := make([]int, maxPort)
-		for i := range out {
-			out[i] = i + minPort
-		}
-		return out, nil
-	}
-
 	seen := make(map[int]struct{})
 	for _, part := range strings.Split(spec, ",") {
 		part = strings.TrimSpace(part)
 		if part == "" {
 			return nil, errors.New("empty entry in port specification")
+		}
+		if strings.EqualFold(part, "all") {
+			for p := minPort; p <= maxPort; p++ {
+				seen[p] = struct{}{}
+			}
+			continue
 		}
 		if strings.EqualFold(part, "web") {
 			for _, p := range webPorts {
