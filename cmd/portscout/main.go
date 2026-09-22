@@ -31,6 +31,7 @@ func run() int {
 		asCSV       = flag.Bool("csv", false, "output results as CSV")
 		quiet       = flag.Bool("quiet", false, "output only open port numbers")
 		showVersion = flag.Bool("version", false, "print version and exit")
+		shortVersion = flag.Bool("v", false, "print version and exit")
 	)
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "portscout %s - concurrent TCP port scanner\n\n", version)
@@ -40,7 +41,7 @@ func run() int {
 	}
 	flag.Parse()
 
-	if *showVersion {
+	if *showVersion || *shortVersion {
 		fmt.Println("portscout", version)
 		return 0
 	}

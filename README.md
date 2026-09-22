@@ -44,6 +44,7 @@ portscout [flags] <host>
   -json         output results as JSON
   -csv          output results as CSV
   -quiet        output only open port numbers
+  -v            print version and exit (short form)
   -version      print version and exit
 ```
 
