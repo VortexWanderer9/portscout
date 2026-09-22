@@ -97,6 +97,8 @@ internal/report/      table and JSON output
 ```sh
 make test    # run tests with the race detector
 make vet     # go vet
+make check   # run tests and static checks
+make coverage # print test coverage by function
 make fmt     # gofmt
 make build   # build to ./bin/portscout
 ```
