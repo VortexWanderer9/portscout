@@ -32,10 +32,7 @@ type Options struct {
 // Scan probes every port in opts.Ports and returns only the open ones,
 // sorted by port number. It stops early if ctx is cancelled.
 func Scan(ctx context.Context, opts Options) []Result {
-	workers := opts.Workers
-	if workers < 1 {
-		workers = 1
-	}
+	workers := workerCount(opts.Workers, len(opts.Ports))
 
 	jobs := make(chan int)
 	results := make(chan Result)
@@ -79,6 +76,16 @@ func Scan(ctx context.Context, opts Options) []Result {
 	}
 	sort.Slice(open, func(i, j int) bool { return open[i].Port < open[j].Port })
 	return open
+}
+
+func workerCount(requested, jobs int) int {
+	if requested < 1 {
+		return 1
+	}
+	if jobs > 0 && requested > jobs {
+		return jobs
+	}
+	return requested
 }
 
 func probe(ctx context.Context, opts Options, port int) Result {

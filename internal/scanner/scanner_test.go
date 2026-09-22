@@ -134,3 +134,21 @@ func TestServiceName(t *testing.T) {
 		t.Error("expected empty name for unknown port")
 	}
 }
+
+func TestWorkerCount(t *testing.T) {
+	tests := []struct {
+		requested int
+		jobs      int
+		want      int
+	}{
+		{requested: 0, jobs: 5, want: 1},
+		{requested: 2, jobs: 5, want: 2},
+		{requested: 10, jobs: 2, want: 2},
+		{requested: 10, jobs: 0, want: 10},
+	}
+	for _, tt := range tests {
+		if got := workerCount(tt.requested, tt.jobs); got != tt.want {
+			t.Errorf("workerCount(%d, %d) = %d, want %d", tt.requested, tt.jobs, got, tt.want)
+		}
+	}
+}
