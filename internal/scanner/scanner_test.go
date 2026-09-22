@@ -152,3 +152,19 @@ func TestWorkerCount(t *testing.T) {
 		}
 	}
 }
+
+func TestBannerReadTimeout(t *testing.T) {
+	tests := []struct {
+		input time.Duration
+		want  time.Duration
+	}{
+		{input: 0, want: 50 * time.Millisecond},
+		{input: 100 * time.Millisecond, want: 50 * time.Millisecond},
+		{input: 10 * time.Second, want: time.Second},
+	}
+	for _, tt := range tests {
+		if got := bannerReadTimeout(tt.input); got != tt.want {
+			t.Errorf("bannerReadTimeout(%s) = %s, want %s", tt.input, got, tt.want)
+		}
+	}
+}

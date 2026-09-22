@@ -111,15 +111,25 @@ func probe(ctx context.Context, opts Options, port int) Result {
 }
 
 func grabBanner(conn net.Conn, timeout time.Duration) string {
-	wait := timeout / 2
-	if wait > time.Second {
-		wait = time.Second
-	}
-	_ = conn.SetReadDeadline(time.Now().Add(wait))
+	_ = conn.SetReadDeadline(time.Now().Add(bannerReadTimeout(timeout)))
 
 	buf := make([]byte, 256)
 	n, _ := conn.Read(buf)
 	return sanitize(string(buf[:n]))
+}
+
+func bannerReadTimeout(timeout time.Duration) time.Duration {
+	const minWait = 50 * time.Millisecond
+	const maxWait = time.Second
+
+	wait := timeout / 2
+	if wait < minWait {
+		return minWait
+	}
+	if wait > maxWait {
+		return maxWait
+	}
+	return wait
 }
 
 // sanitize keeps the first line of a banner and strips non-printable bytes.
