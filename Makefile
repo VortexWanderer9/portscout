@@ -2,7 +2,7 @@ BINARY  := portscout
 VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
 LDFLAGS := -s -w -X main.version=$(VERSION)
 
-.PHONY: build test vet fmt run clean
+.PHONY: build test vet check fmt run clean
 
 build:
 	mkdir -p bin
@@ -13,6 +13,8 @@ test:
 
 vet:
 	go vet ./...
+
+check: test vet
 
 fmt:
 	gofmt -s -w .
