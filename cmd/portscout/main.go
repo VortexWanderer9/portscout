@@ -23,14 +23,14 @@ func main() {
 
 func run() int {
 	var (
-		portSpec    = flag.String("p", "1-1024", "ports to scan, e.g. \"22,80,443\" or \"1-1024\"")
-		timeout     = flag.Duration("t", 800*time.Millisecond, "timeout per connection")
-		workers     = flag.Int("w", 200, "number of concurrent workers")
-		banners     = flag.Bool("b", false, "grab service banners from open ports")
-		asJSON      = flag.Bool("json", false, "output results as JSON")
-		asCSV       = flag.Bool("csv", false, "output results as CSV")
-		quiet       = flag.Bool("quiet", false, "output only open port numbers")
-		showVersion = flag.Bool("version", false, "print version and exit")
+		portSpec     = flag.String("p", "1-1024", "ports to scan, e.g. \"22,80,443\" or \"1-1024\"")
+		timeout      = flag.Duration("t", 800*time.Millisecond, "timeout per connection")
+		workers      = flag.Int("w", 200, "number of concurrent workers")
+		banners      = flag.Bool("b", false, "grab service banners from open ports")
+		asJSON       = flag.Bool("json", false, "output results as JSON")
+		asCSV        = flag.Bool("csv", false, "output results as CSV")
+		quiet        = flag.Bool("quiet", false, "output only open port numbers")
+		showVersion  = flag.Bool("version", false, "print version and exit")
 		shortVersion = flag.Bool("v", false, "print version and exit")
 	)
 	flag.Usage = func() {
