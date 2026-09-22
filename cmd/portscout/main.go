@@ -5,6 +5,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"os/signal"
 	"time"
@@ -18,67 +19,131 @@ import (
 var version = "dev"
 
 func main() {
-	os.Exit(run())
+	os.Exit(runArgs(os.Args[1:], os.Stdout, os.Stderr))
 }
 
-func run() int {
-	var (
-		portSpec     = flag.String("p", "1-1024", "ports to scan, e.g. \"22,80,443\" or \"1-1024\"")
-		timeout      = flag.Duration("t", 800*time.Millisecond, "timeout per connection")
-		workers      = flag.Int("w", 200, "number of concurrent workers")
-		banners      = flag.Bool("b", false, "grab service banners from open ports")
-		asJSON       = flag.Bool("json", false, "output results as JSON")
-		asCSV        = flag.Bool("csv", false, "output results as CSV")
-		quiet        = flag.Bool("quiet", false, "output only open port numbers")
-		showVersion  = flag.Bool("version", false, "print version and exit")
-		shortVersion = flag.Bool("v", false, "print version and exit")
-	)
-	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "portscout %s - concurrent TCP port scanner\n\n", version)
-		fmt.Fprintf(os.Stderr, "Usage:\n  portscout [flags] <host>\n\nFlags:\n")
-		flag.PrintDefaults()
-		fmt.Fprintf(os.Stderr, "\nOnly scan hosts you own or have permission to test.\n")
+func runArgs(args []string, stdout, stderr io.Writer) int {
+	if len(args) > 0 {
+		switch args[0] {
+		case "version":
+			fmt.Fprintln(stdout, "portscout", version)
+			return 0
+		case "scan":
+			args = args[1:]
+		case "help":
+			args = []string{"--help"}
+		}
 	}
-	flag.Parse()
 
-	if *showVersion || *shortVersion {
-		fmt.Println("portscout", version)
+	fs := flag.NewFlagSet("portscout scan", flag.ContinueOnError)
+	fs.SetOutput(stderr)
+	fs.Usage = func() {
+		fmt.Fprintf(stderr, "portscout %s - concurrent TCP port scanner\n\n", version)
+		fmt.Fprintln(stderr, "Usage:")
+		fmt.Fprintln(stderr, "  portscout scan [flags] <host>")
+		fmt.Fprintln(stderr, "  portscout version")
+		fmt.Fprintln(stderr, "\nThe legacy form 'portscout [flags] <host>' remains supported.\n\nFlags:")
+		fs.PrintDefaults()
+		fmt.Fprintln(stderr, "\nOnly scan hosts you own or have permission to test.")
+	}
+
+	var (
+		portSpec    string
+		timeout     time.Duration
+		workers     int
+		banners     bool
+		format      string
+		asJSON      bool
+		asCSV       bool
+		quiet       bool
+		showVersion bool
+		help        bool
+	)
+	fs.StringVar(&portSpec, "p", "1-1024", "ports to scan, e.g. \"22,80,443\" or \"1-1024\"")
+	fs.StringVar(&portSpec, "ports", "1-1024", "ports to scan")
+	fs.DurationVar(&timeout, "t", 800*time.Millisecond, "timeout per connection")
+	fs.DurationVar(&timeout, "timeout", 800*time.Millisecond, "timeout per connection")
+	fs.IntVar(&workers, "w", 200, "number of concurrent workers")
+	fs.IntVar(&workers, "workers", 200, "number of concurrent workers")
+	fs.BoolVar(&banners, "b", false, "grab service banners from open ports")
+	fs.BoolVar(&banners, "banners", false, "grab service banners from open ports")
+	fs.StringVar(&format, "format", "table", "output format: table, json, csv, or ports")
+	fs.BoolVar(&asJSON, "json", false, "output results as JSON (legacy alias)")
+	fs.BoolVar(&asCSV, "csv", false, "output results as CSV (legacy alias)")
+	fs.BoolVar(&quiet, "quiet", false, "output only open port numbers (legacy alias)")
+	fs.BoolVar(&showVersion, "version", false, "print version and exit")
+	fs.BoolVar(&showVersion, "v", false, "print version and exit")
+	fs.BoolVar(&help, "help", false, "print help and exit")
+	fs.BoolVar(&help, "h", false, "print help and exit")
+
+	if err := fs.Parse(args); err != nil {
+		return 2
+	}
+	if help {
+		fs.Usage()
 		return 0
 	}
-	if flag.NArg() != 1 {
-		flag.Usage()
+	if showVersion {
+		fmt.Fprintln(stdout, "portscout", version)
+		return 0
+	}
+	if fs.NArg() != 1 {
+		fs.Usage()
 		return 2
 	}
-	if *workers < 1 {
-		fmt.Fprintln(os.Stderr, "error: -w must be at least 1")
+	if workers < 1 {
+		fmt.Fprintln(stderr, "error: --workers must be at least 1")
 		return 2
 	}
-	if *timeout <= 0 {
-		fmt.Fprintln(os.Stderr, "error: -t must be greater than 0")
-		return 2
-	}
-	if boolCount(*asJSON, *asCSV, *quiet) > 1 {
-		fmt.Fprintln(os.Stderr, "error: only one of -json, -csv, or -quiet may be used")
+	if timeout <= 0 {
+		fmt.Fprintln(stderr, "error: --timeout must be greater than 0")
 		return 2
 	}
 
-	portList, err := ports.Parse(*portSpec)
+	formatSet := false
+	fs.Visit(func(f *flag.Flag) {
+		formatSet = formatSet || f.Name == "format"
+	})
+	if formatSet && boolCount(asJSON, asCSV, quiet) > 0 {
+		fmt.Fprintln(stderr, "error: --format cannot be combined with --json, --csv, or --quiet")
+		return 2
+	}
+	if !formatSet {
+		switch {
+		case asJSON:
+			format = "json"
+		case asCSV:
+			format = "csv"
+		case quiet:
+			format = "ports"
+		}
+	}
+	if !validFormat(format) {
+		fmt.Fprintf(stderr, "error: unsupported format %q (use table, json, csv, or ports)\n", format)
+		return 2
+	}
+	if boolCount(asJSON, asCSV, quiet) > 1 {
+		fmt.Fprintln(stderr, "error: only one of --json, --csv, or --quiet may be used")
+		return 2
+	}
+
+	portList, err := ports.Parse(portSpec)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		fmt.Fprintf(stderr, "error: %v\n", err)
 		return 2
 	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
 
-	host := flag.Arg(0)
+	host := fs.Arg(0)
 	start := time.Now()
 	open := scanner.Scan(ctx, scanner.Options{
 		Host:        host,
 		Ports:       portList,
-		Timeout:     *timeout,
-		Workers:     *workers,
-		GrabBanners: *banners,
+		Timeout:     timeout,
+		Workers:     workers,
+		GrabBanners: banners,
 	})
 
 	summary := report.Summary{
@@ -88,24 +153,34 @@ func run() int {
 		Open:     open,
 	}
 
-	if *quiet {
-		err = report.Ports(os.Stdout, open)
-	} else if *asJSON {
-		err = report.JSON(os.Stdout, summary)
-	} else if *asCSV {
-		err = report.CSV(os.Stdout, open)
-	} else {
-		err = report.Table(os.Stdout, summary)
+	switch format {
+	case "ports":
+		err = report.Ports(stdout, open)
+	case "json":
+		err = report.JSON(stdout, summary)
+	case "csv":
+		err = report.CSV(stdout, open)
+	default:
+		err = report.Table(stdout, summary)
 	}
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		fmt.Fprintf(stderr, "error: %v\n", err)
 		return 1
 	}
 	if ctx.Err() != nil {
-		fmt.Fprintln(os.Stderr, "scan interrupted; results are partial")
+		fmt.Fprintln(stderr, "scan interrupted; results are partial")
 		return 130
 	}
 	return 0
+}
+
+func validFormat(format string) bool {
+	switch format {
+	case "table", "json", "csv", "ports":
+		return true
+	default:
+		return false
+	}
 }
 
 func boolCount(values ...bool) int {
