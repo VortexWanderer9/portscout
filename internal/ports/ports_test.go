@@ -19,6 +19,7 @@ func TestParse(t *testing.T) {
 		{"web preset mixed", "22,web,443", []int{22, 80, 443, 8080, 8443}, false},
 		{"database preset", "database", []int{1433, 1521, 3306, 5432, 6379, 27017}, false},
 		{"mail preset", "mail", []int{25, 110, 143, 465, 587, 993, 995}, false},
+		{"remote preset", "remote", []int{22, 23, 3389, 5900}, false},
 		{"mixed with duplicates", "22,20-23,22", []int{20, 21, 22, 23}, false},
 		{"whitespace", " 22 , 80 ", []int{22, 80}, false},
 		{"empty", "", nil, true},

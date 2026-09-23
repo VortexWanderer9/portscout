@@ -27,6 +27,7 @@ var commonServices = map[int]string{
 	3389:  "rdp",
 	5432:  "postgresql",
 	5672:  "amqp",
+	5900:  "vnc",
 	6443:  "kubernetes",
 	6379:  "redis",
 	8080:  "http-alt",

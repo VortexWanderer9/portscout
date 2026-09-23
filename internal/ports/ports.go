@@ -20,6 +20,8 @@ var databasePorts = []int{1433, 1521, 3306, 5432, 6379, 27017}
 
 var mailPorts = []int{25, 110, 143, 465, 587, 993, 995}
 
+var remotePorts = []int{22, 23, 3389, 5900}
+
 // Parse turns a comma-separated list of ports and ranges into a sorted,
 // de-duplicated slice of port numbers.
 func Parse(spec string) ([]int, error) {
@@ -53,6 +55,12 @@ func Parse(spec string) ([]int, error) {
 		}
 		if strings.EqualFold(part, "mail") {
 			for _, p := range mailPorts {
+				seen[p] = struct{}{}
+			}
+			continue
+		}
+		if strings.EqualFold(part, "remote") {
+			for _, p := range remotePorts {
 				seen[p] = struct{}{}
 			}
 			continue
