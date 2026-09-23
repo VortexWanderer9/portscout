@@ -45,6 +45,7 @@ portscout version
   --banners            grab service banners; -b also works
   --format string      table, json, csv, or ports (default "table")
   --network string     tcp, tcp4, or tcp6 (default "tcp")
+  --output path         write results to a file
   --help               print help; -h also works
 ```
 
@@ -74,6 +75,9 @@ portscout scan --format ports --ports 1-1024 127.0.0.1
 
 # Send a CSV report to a file
 portscout scan --format csv --ports web example.com > report.csv
+
+# Write a JSON report directly to a file
+portscout scan --format json --output report.json --ports database db.example.com
 
 # Scan every port, faster, JSON output piped to jq
 portscout scan --format json --ports all --workers 500 192.168.1.10 | jq '.open[].port'

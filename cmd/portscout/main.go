@@ -55,6 +55,7 @@ func runArgs(args []string, stdout, stderr io.Writer) int {
 		banners     bool
 		format      string
 		network     string
+		outputPath  string
 		asJSON      bool
 		asCSV       bool
 		quiet       bool
@@ -72,6 +73,7 @@ func runArgs(args []string, stdout, stderr io.Writer) int {
 	fs.BoolVar(&banners, "banners", false, "grab service banners from open ports")
 	fs.StringVar(&format, "format", "table", "output format: table, json, csv, or ports")
 	fs.StringVar(&network, "network", "tcp", "network: tcp, tcp4, or tcp6")
+	fs.StringVar(&outputPath, "output", "", "write results to a file instead of standard output")
 	fs.BoolVar(&asJSON, "json", false, "output results as JSON (legacy alias)")
 	fs.BoolVar(&asCSV, "csv", false, "output results as CSV (legacy alias)")
 	fs.BoolVar(&quiet, "quiet", false, "output only open port numbers (legacy alias)")
@@ -173,16 +175,27 @@ func runArgs(args []string, stdout, stderr io.Writer) int {
 		Duration: time.Since(start),
 		Open:     open,
 	}
+	output := stdout
+	var outputFile *os.File
+	if outputPath != "" {
+		outputFile, err = os.Create(outputPath)
+		if err != nil {
+			fmt.Fprintf(stderr, "error: create output file: %v\n", err)
+			return 1
+		}
+		defer outputFile.Close()
+		output = outputFile
+	}
 
 	switch format {
 	case "ports":
-		err = report.Ports(stdout, open)
+		err = report.Ports(output, open)
 	case "json":
-		err = report.JSON(stdout, summary)
+		err = report.JSON(output, summary)
 	case "csv":
-		err = report.CSV(stdout, open)
+		err = report.CSV(output, open)
 	default:
-		err = report.Table(stdout, summary)
+		err = report.Table(output, summary)
 	}
 	if err != nil {
 		fmt.Fprintf(stderr, "error: %v\n", err)

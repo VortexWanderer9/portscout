@@ -23,7 +23,7 @@ type Result struct {
 // Options configures a scan.
 type Options struct {
 	Host        string
-	Network     string        // tcp, tcp4, or tcp6
+	Network     string // tcp, tcp4, or tcp6
 	Ports       []int
 	Timeout     time.Duration // per-connection timeout
 	Workers     int           // number of concurrent probes
