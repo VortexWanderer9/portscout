@@ -43,6 +43,12 @@ func TestValidFormat(t *testing.T) {
 	}
 }
 
+func TestValidNetwork(t *testing.T) {
+	if !validNetwork("tcp6") || validNetwork("udp") {
+		t.Error("validNetwork returned an unexpected result")
+	}
+}
+
 func TestBoolCount(t *testing.T) {
 	if got := boolCount(true, false, true); got != 2 {
 		t.Errorf("boolCount() = %d, want 2", got)

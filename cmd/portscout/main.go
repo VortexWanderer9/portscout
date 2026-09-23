@@ -54,6 +54,7 @@ func runArgs(args []string, stdout, stderr io.Writer) int {
 		workers     int
 		banners     bool
 		format      string
+		network     string
 		asJSON      bool
 		asCSV       bool
 		quiet       bool
@@ -70,6 +71,7 @@ func runArgs(args []string, stdout, stderr io.Writer) int {
 	fs.BoolVar(&banners, "b", false, "grab service banners from open ports")
 	fs.BoolVar(&banners, "banners", false, "grab service banners from open ports")
 	fs.StringVar(&format, "format", "table", "output format: table, json, csv, or ports")
+	fs.StringVar(&network, "network", "tcp", "network: tcp, tcp4, or tcp6")
 	fs.BoolVar(&asJSON, "json", false, "output results as JSON (legacy alias)")
 	fs.BoolVar(&asCSV, "csv", false, "output results as CSV (legacy alias)")
 	fs.BoolVar(&quiet, "quiet", false, "output only open port numbers (legacy alias)")
@@ -124,6 +126,10 @@ func runArgs(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintf(stderr, "error: unsupported format %q (use table, json, csv, or ports)\n", format)
 		return 2
 	}
+	if !validNetwork(network) {
+		fmt.Fprintf(stderr, "error: unsupported network %q (use tcp, tcp4, or tcp6)\n", network)
+		return 2
+	}
 	if boolCount(asJSON, asCSV, quiet) > 1 {
 		fmt.Fprintln(stderr, "error: only one of --json, --csv, or --quiet may be used")
 		return 2
@@ -154,6 +160,7 @@ func runArgs(args []string, stdout, stderr io.Writer) int {
 	start := time.Now()
 	open := scanner.Scan(ctx, scanner.Options{
 		Host:        host,
+		Network:     network,
 		Ports:       portList,
 		Timeout:     timeout,
 		Workers:     workers,
@@ -186,6 +193,10 @@ func runArgs(args []string, stdout, stderr io.Writer) int {
 		return 130
 	}
 	return 0
+}
+
+func validNetwork(network string) bool {
+	return network == "tcp" || network == "tcp4" || network == "tcp6"
 }
 
 func validFormat(format string) bool {

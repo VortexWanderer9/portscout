@@ -23,6 +23,7 @@ type Result struct {
 // Options configures a scan.
 type Options struct {
 	Host        string
+	Network     string        // tcp, tcp4, or tcp6
 	Ports       []int
 	Timeout     time.Duration // per-connection timeout
 	Workers     int           // number of concurrent probes
@@ -92,9 +93,13 @@ func probe(ctx context.Context, opts Options, port int) Result {
 	res := Result{Port: port}
 	addr := net.JoinHostPort(opts.Host, strconv.Itoa(port))
 
+	network := opts.Network
+	if network == "" {
+		network = "tcp"
+	}
 	dialer := net.Dialer{Timeout: opts.Timeout}
 	start := time.Now()
-	conn, err := dialer.DialContext(ctx, "tcp", addr)
+	conn, err := dialer.DialContext(ctx, network, addr)
 	if err != nil {
 		return res
 	}

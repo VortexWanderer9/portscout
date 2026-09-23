@@ -44,6 +44,7 @@ portscout version
   --workers int        concurrent workers; -w also works (default 200)
   --banners            grab service banners; -b also works
   --format string      table, json, csv, or ports (default "table")
+  --network string     tcp, tcp4, or tcp6 (default "tcp")
   --help               print help; -h also works
 ```
 
