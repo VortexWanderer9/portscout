@@ -10,7 +10,7 @@ A fast, dependency-free TCP port scanner written in Go. It uses a worker pool fo
 ## Features
 
 - Concurrent scanning with a configurable worker pool
-- Flexible port specs: `22`, `22,80,443`, `1-1024`, `all`, `web`, `database`, or a mix; presets can be combined with explicit ports
+- Flexible port specs: `22`, `22,80,443`, `1-1024`, `all`, `web`, `database`, `mail`, or a mix; presets can be combined with explicit ports
 - Optional banner grabbing (SSH, SMTP, FTP, etc.)
 - Well-known service name detection, including LDAP, Docker, Kubernetes, and Memcached
 - Table, JSON, CSV, or port-only output
