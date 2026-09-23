@@ -83,6 +83,21 @@ func Parse(spec string) ([]int, error) {
 	return out, nil
 }
 
+// Exclude removes excluded ports from included while preserving sort order.
+func Exclude(included, excluded []int) []int {
+	blocked := make(map[int]struct{}, len(excluded))
+	for _, p := range excluded {
+		blocked[p] = struct{}{}
+	}
+	out := make([]int, 0, len(included))
+	for _, p := range included {
+		if _, ok := blocked[p]; !ok {
+			out = append(out, p)
+		}
+	}
+	return out
+}
+
 func parseEntry(s string) (lo, hi int, err error) {
 	if a, b, isRange := strings.Cut(s, "-"); isRange {
 		if lo, err = parsePort(a); err != nil {

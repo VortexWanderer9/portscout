@@ -65,3 +65,11 @@ func TestParseAllCanBeCombined(t *testing.T) {
 		t.Fatalf("Parse(all,web) returned unexpected range: len=%d first=%d last=%d", len(got), got[0], got[len(got)-1])
 	}
 }
+
+func TestExclude(t *testing.T) {
+	got := Exclude([]int{22, 80, 443, 8080}, []int{80, 8080})
+	want := []int{22, 443}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("Exclude() = %v, want %v", got, want)
+	}
+}

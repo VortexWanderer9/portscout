@@ -49,6 +49,7 @@ func runArgs(args []string, stdout, stderr io.Writer) int {
 
 	var (
 		portSpec    string
+		excludeSpec string
 		timeout     time.Duration
 		workers     int
 		banners     bool
@@ -61,6 +62,7 @@ func runArgs(args []string, stdout, stderr io.Writer) int {
 	)
 	fs.StringVar(&portSpec, "p", "1-1024", "ports to scan, e.g. \"22,80,443\" or \"1-1024\"")
 	fs.StringVar(&portSpec, "ports", "1-1024", "ports to scan")
+	fs.StringVar(&excludeSpec, "exclude", "", "ports to skip")
 	fs.DurationVar(&timeout, "t", 800*time.Millisecond, "timeout per connection")
 	fs.DurationVar(&timeout, "timeout", 800*time.Millisecond, "timeout per connection")
 	fs.IntVar(&workers, "w", 200, "number of concurrent workers")
@@ -131,6 +133,18 @@ func runArgs(args []string, stdout, stderr io.Writer) int {
 	if err != nil {
 		fmt.Fprintf(stderr, "error: %v\n", err)
 		return 2
+	}
+	if excludeSpec != "" {
+		excluded, err := ports.Parse(excludeSpec)
+		if err != nil {
+			fmt.Fprintf(stderr, "error: invalid --exclude value: %v\n", err)
+			return 2
+		}
+		portList = ports.Exclude(portList, excluded)
+		if len(portList) == 0 {
+			fmt.Fprintln(stderr, "error: --exclude removed every selected port")
+			return 2
+		}
 	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)

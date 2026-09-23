@@ -39,6 +39,7 @@ portscout scan [flags] <host>
 portscout version
 
   --ports string       ports to scan; -p also works (default "1-1024")
+  --exclude string     ports or ranges to skip
   --timeout duration   timeout per connection; -t also works (default 800ms)
   --workers int        concurrent workers; -w also works (default 200)
   --banners            grab service banners; -b also works
@@ -63,6 +64,9 @@ portscout scan --banners --ports 22,80,443,8080 scanme.nmap.org
 
 # Scan common web-service ports (80, 443, 8080, and 8443)
 portscout scan --ports web example.com
+
+# Scan a range while skipping sensitive ports
+portscout scan --ports 1-1024 --exclude 22,3389 example.com
 
 # Print open port numbers only, one per line
 portscout scan --format ports --ports 1-1024 127.0.0.1
