@@ -26,6 +26,19 @@ func TestRunArgsHelpCommand(t *testing.T) {
 	}
 }
 
+func TestRunArgsPresetsCommand(t *testing.T) {
+	var stdout, stderr bytes.Buffer
+	if got := runArgs([]string{"presets"}, &stdout, &stderr); got != 0 {
+		t.Fatalf("runArgs(presets) = %d, want 0", got)
+	}
+	if !strings.Contains(stdout.String(), "dns") || !strings.Contains(stdout.String(), "admin") || !strings.Contains(stdout.String(), "internal") {
+		t.Errorf("preset output missing names: %s", stdout.String())
+	}
+	if stderr.Len() != 0 {
+		t.Errorf("unexpected stderr output: %s", stderr.String())
+	}
+}
+
 func TestRunArgsLongFlags(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	got := runArgs([]string{"scan", "--ports", "invalid", "--workers", "1", "localhost"}, &stdout, &stderr)
