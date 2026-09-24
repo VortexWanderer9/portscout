@@ -32,6 +32,12 @@ func runArgs(args []string, stdout, stderr io.Writer) int {
 			args = args[1:]
 		case "help":
 			args = []string{"--help"}
+		case "presets":
+			fmt.Fprintln(stdout, "Available presets:")
+			for _, preset := range []string{"all", "web", "database", "mail", "remote", "dns", "admin", "internal", "kubernetes"} {
+				fmt.Fprintf(stdout, "  - %s\n", preset)
+			}
+			return 0
 		}
 	}
 
