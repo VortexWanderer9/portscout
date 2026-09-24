@@ -24,6 +24,8 @@ var remotePorts = []int{22, 23, 3389, 5900}
 
 var dnsPorts = []int{53, 853}
 
+var adminPorts = []int{21, 22, 23, 80, 443, 3389, 5900, 8080, 8443}
+
 // Parse turns a comma-separated list of ports and ranges into a sorted,
 // de-duplicated slice of port numbers.
 func Parse(spec string) ([]int, error) {
@@ -69,6 +71,12 @@ func Parse(spec string) ([]int, error) {
 		}
 		if strings.EqualFold(part, "dns") {
 			for _, p := range dnsPorts {
+				seen[p] = struct{}{}
+			}
+			continue
+		}
+		if strings.EqualFold(part, "admin") {
+			for _, p := range adminPorts {
 				seen[p] = struct{}{}
 			}
 			continue
