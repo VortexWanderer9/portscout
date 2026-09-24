@@ -28,6 +28,8 @@ var adminPorts = []int{21, 22, 23, 80, 443, 3389, 5900, 8080, 8443}
 
 var internalPorts = []int{3306, 5432, 6379, 8000, 8080, 8443, 9000, 9090, 27017}
 
+var kubernetesPorts = []int{6443, 8443}
+
 // Parse turns a comma-separated list of ports and ranges into a sorted,
 // de-duplicated slice of port numbers.
 func Parse(spec string) ([]int, error) {
@@ -85,6 +87,12 @@ func Parse(spec string) ([]int, error) {
 		}
 		if strings.EqualFold(part, "internal") {
 			for _, p := range internalPorts {
+				seen[p] = struct{}{}
+			}
+			continue
+		}
+		if strings.EqualFold(part, "kubernetes") {
+			for _, p := range kubernetesPorts {
 				seen[p] = struct{}{}
 			}
 			continue
