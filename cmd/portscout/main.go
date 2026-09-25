@@ -47,6 +47,7 @@ func runArgs(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintf(stderr, "portscout %s - concurrent TCP port scanner\n\n", version)
 		fmt.Fprintln(stderr, "Usage:")
 		fmt.Fprintln(stderr, "  portscout scan [flags] <host>")
+		fmt.Fprintln(stderr, "  portscout presets")
 		fmt.Fprintln(stderr, "  portscout version")
 		fmt.Fprintln(stderr, "\nThe legacy form 'portscout [flags] <host>' remains supported.\n\nFlags:")
 		fs.PrintDefaults()
