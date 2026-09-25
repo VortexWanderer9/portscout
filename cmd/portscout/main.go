@@ -6,8 +6,12 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"net"
 	"os"
 	"os/signal"
+	"strconv"
+	"strings"
+	"text/tabwriter"
 	"time"
 
 	"github.com/VortexWanderer9/portscout/internal/ports"
@@ -33,10 +37,10 @@ func runArgs(args []string, stdout, stderr io.Writer) int {
 		case "help":
 			args = []string{"--help"}
 		case "presets":
-			fmt.Fprintln(stdout, "Available presets:")
-			for _, preset := range []string{"all", "web", "database", "mail", "remote", "dns", "admin", "internal", "kubernetes"} {
-				fmt.Fprintf(stdout, "  - %s\n", preset)
-			}
+			printPresets(stdout, false)
+			return 0
+		case "list-presets":
+			printPresets(stdout, true)
 			return 0
 		}
 	}
@@ -48,6 +52,7 @@ func runArgs(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, "Usage:")
 		fmt.Fprintln(stderr, "  portscout scan [flags] <host>")
 		fmt.Fprintln(stderr, "  portscout presets")
+		fmt.Fprintln(stderr, "  portscout list-presets")
 		fmt.Fprintln(stderr, "  portscout version")
 		fmt.Fprintln(stderr, "\nThe legacy form 'portscout [flags] <host>' remains supported.\n\nFlags:")
 		fs.PrintDefaults()
@@ -155,7 +160,9 @@ func runArgs(args []string, stdout, stderr io.Writer) int {
 			fmt.Fprintf(stderr, "error: invalid --exclude value: %v\n", err)
 			return 2
 		}
+		before := len(portList)
 		portList = ports.Exclude(portList, excluded)
+		excludedCount = before - len(portList)
 		if len(portList) == 0 {
 			fmt.Fprintln(stderr, "error: --exclude removed every selected port")
 			return 2
@@ -176,11 +183,18 @@ func runArgs(args []string, stdout, stderr io.Writer) int {
 		GrabBanners: banners,
 	})
 
+	hostname := resolveHostname(ctx, host)
 	summary := report.Summary{
-		Host:     host,
-		Scanned:  len(portList),
-		Duration: time.Since(start),
-		Open:     open,
+		Host:        host,
+		Hostname:    hostname,
+		Scanned:     len(portList),
+		Excluded:    excludedCount,
+		Duration:    time.Since(start),
+		Workers:     workers,
+		Timeout:     timeout,
+		Network:     network,
+		GrabBanners: banners,
+		Open:        open,
 	}
 	output := stdout
 	var outputFile *os.File
@@ -236,4 +250,59 @@ func boolCount(values ...bool) int {
 		}
 	}
 	return count
+}
+
+func printPresets(w io.Writer, detailed bool) {
+	presets := ports.Presets()
+	if !detailed {
+		fmt.Fprintln(w, "Available presets:")
+		for _, p := range presets {
+			fmt.Fprintf(w, "  - %s\n", p.Name)
+		}
+		return
+	}
+	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
+	fmt.Fprintln(tw, "PRESET\tCOUNT\tDESCRIPTION\tPORTS")
+	for _, p := range presets {
+		desc := p.Desc
+		var count int
+		var sample string
+		if p.Name == "all" {
+			count = 65535
+			sample = "1-65535"
+		} else {
+			count = len(p.Ports)
+			sample = intsJoin(p.Ports, ",")
+		}
+		fmt.Fprintf(tw, "%s\t%d\t%s\t%s\n", p.Name, count, desc, sample)
+	}
+	tw.Flush()
+}
+
+func intsJoin(values []int, sep string) string {
+	if len(values) == 0 {
+		return ""
+	}
+	var b strings.Builder
+	for i, v := range values {
+		if i > 0 {
+			b.WriteString(sep)
+		}
+		b.WriteString(strconv.Itoa(v))
+	}
+	return b.String()
+}
+
+func resolveHostname(ctx context.Context, host string) string {
+	if host == "" {
+		return ""
+	}
+	if net.ParseIP(host) == nil {
+		return host
+	}
+	names, err := net.DefaultResolver.LookupAddr(ctx, host)
+	if err != nil || len(names) == 0 {
+		return ""
+	}
+	return strings.TrimSuffix(names[0], ".")
 }

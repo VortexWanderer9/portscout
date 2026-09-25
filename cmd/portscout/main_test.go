@@ -34,6 +34,24 @@ func TestRunArgsPresetsCommand(t *testing.T) {
 	if !strings.Contains(stdout.String(), "dns") || !strings.Contains(stdout.String(), "admin") || !strings.Contains(stdout.String(), "internal") {
 		t.Errorf("preset output missing names: %s", stdout.String())
 	}
+	if !strings.Contains(stdout.String(), "common") {
+		t.Errorf("preset output missing 'common' preset: %s", stdout.String())
+	}
+	if stderr.Len() != 0 {
+		t.Errorf("unexpected stderr output: %s", stderr.String())
+	}
+}
+
+func TestRunArgsListPresetsCommand(t *testing.T) {
+	var stdout, stderr bytes.Buffer
+	if got := runArgs([]string{"list-presets"}, &stdout, &stderr); got != 0 {
+		t.Fatalf("runArgs(list-presets) = %d, want 0", got)
+	}
+	for _, want := range []string{"PRESET", "COUNT", "DESCRIPTION", "common", "web"} {
+		if !strings.Contains(stdout.String(), want) {
+			t.Errorf("list-presets missing %q: %s", want, stdout.String())
+		}
+	}
 	if stderr.Len() != 0 {
 		t.Errorf("unexpected stderr output: %s", stderr.String())
 	}
@@ -47,6 +65,28 @@ func TestRunArgsLongFlags(t *testing.T) {
 	}
 	if !strings.Contains(stderr.String(), "invalid port") {
 		t.Errorf("error output = %q, want invalid-port error", stderr.String())
+	}
+}
+
+func TestRunArgsTopFlag(t *testing.T) {
+	var stdout, stderr bytes.Buffer
+	got := runArgs([]string{"scan", "--top", "3", "--workers", "1", "127.0.0.1"}, &stdout, &stderr)
+	if got != 0 && got != 1 && got != 2 {
+		t.Fatalf("runArgs(--top 3) = %d, want 0/1 (network error ok)", got)
+	}
+	if strings.Contains(stderr.String(), "cannot be combined") {
+		t.Errorf("--top alone should not conflict: %s", stderr.String())
+	}
+}
+
+func TestRunArgsTopConflictsWithPorts(t *testing.T) {
+	var stdout, stderr bytes.Buffer
+	got := runArgs([]string{"scan", "--top", "5", "-p", "22,80", "localhost"}, &stdout, &stderr)
+	if got != 2 {
+		t.Fatalf("runArgs(--top -p) = %d, want 2", got)
+	}
+	if !strings.Contains(stderr.String(), "cannot be combined") {
+		t.Errorf("expected conflict error, got: %s", stderr.String())
 	}
 }
 
