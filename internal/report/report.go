@@ -14,10 +14,16 @@ import (
 
 // Summary carries scan metadata alongside the results.
 type Summary struct {
-	Host     string           `json:"host"`
-	Scanned  int              `json:"ports_scanned"`
-	Duration time.Duration    `json:"duration_ns"`
-	Open     []scanner.Result `json:"open"`
+	Host        string           `json:"host"`
+	Hostname    string           `json:"hostname"`
+	Scanned     int              `json:"ports_scanned"`
+	Excluded    int              `json:"ports_excluded"`
+	Duration    time.Duration    `json:"duration_ns"`
+	Workers     int              `json:"workers"`
+	Timeout     time.Duration    `json:"timeout_ns"`
+	Network     string           `json:"network"`
+	GrabBanners bool             `json:"grab_banners"`
+	Open        []scanner.Result `json:"open"`
 }
 
 // JSON writes the summary as indented JSON.

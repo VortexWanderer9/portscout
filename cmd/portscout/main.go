@@ -60,22 +60,25 @@ func runArgs(args []string, stdout, stderr io.Writer) int {
 	}
 
 	var (
-		portSpec    string
-		excludeSpec string
-		timeout     time.Duration
-		workers     int
-		banners     bool
-		format      string
-		network     string
-		outputPath  string
-		asJSON      bool
-		asCSV       bool
-		quiet       bool
-		showVersion bool
-		help        bool
+		portSpec      string
+		excludeSpec   string
+		excludedCount int
+		top           int
+		timeout       time.Duration
+		workers       int
+		banners       bool
+		format        string
+		network       string
+		outputPath    string
+		asJSON        bool
+		asCSV         bool
+		quiet         bool
+		showVersion   bool
+		help          bool
 	)
 	fs.StringVar(&portSpec, "p", "1-1024", "ports to scan, e.g. \"22,80,443\" or \"1-1024\"")
 	fs.StringVar(&portSpec, "ports", "1-1024", "ports to scan")
+	fs.IntVar(&top, "top", 0, "scan the top N common ports")
 	fs.StringVar(&excludeSpec, "exclude", "", "ports to skip")
 	fs.DurationVar(&timeout, "t", 800*time.Millisecond, "timeout per connection")
 	fs.DurationVar(&timeout, "timeout", 800*time.Millisecond, "timeout per connection")
@@ -109,6 +112,10 @@ func runArgs(args []string, stdout, stderr io.Writer) int {
 		fs.Usage()
 		return 2
 	}
+	if top < 0 {
+		fmt.Fprintln(stderr, "error: --top must not be negative")
+		return 2
+	}
 	if workers < 1 {
 		fmt.Fprintln(stderr, "error: --workers must be at least 1")
 		return 2
@@ -119,9 +126,15 @@ func runArgs(args []string, stdout, stderr io.Writer) int {
 	}
 
 	formatSet := false
+	portSpecSet := false
 	fs.Visit(func(f *flag.Flag) {
 		formatSet = formatSet || f.Name == "format"
+		portSpecSet = portSpecSet || f.Name == "p" || f.Name == "ports"
 	})
+	if top > 0 && portSpecSet {
+		fmt.Fprintln(stderr, "error: --top cannot be combined with an explicit port list")
+		return 2
+	}
 	if formatSet && boolCount(asJSON, asCSV, quiet) > 0 {
 		fmt.Fprintln(stderr, "error: --format cannot be combined with --json, --csv, or --quiet")
 		return 2
@@ -149,10 +162,21 @@ func runArgs(args []string, stdout, stderr io.Writer) int {
 		return 2
 	}
 
-	portList, err := ports.Parse(portSpec)
-	if err != nil {
-		fmt.Fprintf(stderr, "error: %v\n", err)
-		return 2
+	var portList []int
+	var err error
+	if top > 0 {
+		common, _ := ports.Lookup("common")
+		if top > len(common) {
+			fmt.Fprintf(stderr, "error: --top cannot exceed %d common ports\n", len(common))
+			return 2
+		}
+		portList = common[:top]
+	} else {
+		portList, err = ports.Parse(portSpec)
+		if err != nil {
+			fmt.Fprintf(stderr, "error: %v\n", err)
+			return 2
+		}
 	}
 	if excludeSpec != "" {
 		excluded, err := ports.Parse(excludeSpec)
