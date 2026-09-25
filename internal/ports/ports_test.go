@@ -24,6 +24,12 @@ func TestParse(t *testing.T) {
 		{"admin preset", "admin", []int{21, 22, 23, 80, 443, 3389, 5900, 8080, 8443}, false},
 		{"internal preset", "internal", []int{3306, 5432, 6379, 8000, 8080, 8443, 9000, 9090, 27017}, false},
 		{"kubernetes preset", "kubernetes", []int{6443, 8443}, false},
+		{"common preset", "common", []int{
+			21, 22, 23, 25, 53, 80, 110, 111, 135, 139,
+			143, 443, 445, 465, 587, 636, 993, 995, 1433, 1521,
+			1723, 3306, 3389, 5432, 5900, 5901, 6379, 8080, 8443, 8888,
+			9200, 9418, 9999, 11211, 27017,
+		}, false},
 		{"mixed with duplicates", "22,20-23,22", []int{20, 21, 22, 23}, false},
 		{"whitespace", " 22 , 80 ", []int{22, 80}, false},
 		{"empty", "", nil, true},
@@ -75,5 +81,36 @@ func TestExclude(t *testing.T) {
 	want := []int{22, 443}
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("Exclude() = %v, want %v", got, want)
+	}
+}
+
+func TestPresets(t *testing.T) {
+	presets := Presets()
+	found := make(map[string]bool)
+	for _, p := range presets {
+		found[p.Name] = true
+		if p.Name != "all" && len(p.Ports) == 0 {
+			t.Errorf("preset %q has empty port list", p.Name)
+		}
+		if p.Desc == "" {
+			t.Errorf("preset %q is missing a description", p.Name)
+		}
+	}
+	for _, want := range []string{"all", "web", "database", "mail", "remote", "dns", "admin", "internal", "kubernetes", "common"} {
+		if !found[want] {
+			t.Errorf("Presets() missing %q", want)
+		}
+	}
+}
+
+func TestLookup(t *testing.T) {
+	if got, ok := Lookup("WEB"); !ok || !reflect.DeepEqual(got, []int{80, 443, 8080, 8443}) {
+		t.Errorf(`Lookup("WEB") = %v,%v, want web ports`, got, ok)
+	}
+	if _, ok := Lookup("nope"); ok {
+		t.Error("Lookup(nope) returned ok")
+	}
+	if got, ok := Lookup("all"); !ok || len(got) != 65535 || got[0] != 1 {
+		t.Errorf("Lookup(all) returned unexpected range")
 	}
 }
